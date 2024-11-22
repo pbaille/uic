@@ -1,0 +1,16 @@
+;; shadow-cljs configuration
+{:deps true
+
+ :nrepl {:port 8777}
+
+ :builds {:main {:target :browser
+                 :modules {:base {:init-fn ezlix.demo.simple/init
+                                  :reload-fn ezlix.demo.simple/render}}
+                 :output-dir "public/js/compiled"
+                 :asset-path "/js/compiled"
+                 :compiler-options {:infer-externs :auto
+                                    :pseudo-names true
+                                    :pretty-print true}
+                 :devtools {:http-root "public"
+                            :http-port 8888
+                            :preloads [devtools.preload]}}}}
