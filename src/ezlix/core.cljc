@@ -15,10 +15,18 @@
                                          (when id {:id id})
                                          (when (seq classes) {:class (str/join " " classes)}))}))))
 
+#?(:clj (defn parse-c [xs]
+          (let [[tag xs] (if (keyword? (first xs))
+                           [(first xs) (rest xs)]
+                           [:div xs])
+                [props children] (if (map? (first xs)) [(first xs) (rest xs)] [{} xs])]
+            {:tag tag :props props :children children})))
+
 #?(:clj (defmacro c
           "easy component interface on top of helix"
-          [tag props & children]
-          (let [{:keys [tag extra-props]} (parse-tag tag)
+          [& xs]
+          (let [{:keys [tag props children]} (parse-c xs)
+                {:keys [tag extra-props]} (parse-tag tag)
                 spread (if-let [styles (:style props)]
                          (macroexpand-1 `(styles/props ~styles ~(merge extra-props (:& props {}))))
                          props)]
