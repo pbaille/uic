@@ -5,30 +5,33 @@
             ["react-dom/client" :as rdom]
             [stylefy.core :as stylefy]
             [stylefy.generic-dom :as gdom]
-            [ezlix.core :as h :refer-macros [c]]))
+            [ezlix.core :as h :refer-macros [c]]
+            [ezlix.state :as s :refer [<< >> sub dbf]]))
 
 (stylefy/init {:dom (gdom/init)})
 
 
-(defnc greeting
-  "A component which greets a user."
-  [{:keys [name]}]
-  ;; use helix.dom to create DOM elements
-  (d/div "Hello, " (d/strong name) "!"))
-
 (defnc app []
-  (let [[state set-state] (hooks/use-state {:name "Helix User"})]
-    (d/div
-     (d/h1 "Welcomeu!")
-      ;; create elements out of components
-     ($ greeting {:name (:name state)})
+  (c {:style {:flex [:column]}}
+     (c {:style {:text :xl}}
+        (<< :foo))
+     (c :button
+        {:on-click (fn [_] (>> :foo.inc))}
+        "inc foo")
      (c :input#my-input.chouette.pouet
         {:style {:bg {:color "red"}
                  :color "white"
                  :hover {:bg {:color :green}}}
 
-         :value (:name state)
-         :on-change #(set-state assoc :name (.. % -target -value))}))))
+         :value (<< [:get :bar])
+         :on-change #(>> [:put :bar (.. % -target -value)])})
+     (c (<< [:get :bar])
+        (<< :foo))))
+
+(s/register
+ {:init (dbf [_ _] {:foo 1 :bar "qux"})
+  :foo [(sub [db _] (get db :foo))
+        {:inc (dbf [db _] (update db :foo inc))}]})
 
 ;; start your app with your favorite React renderer
 (defonce root (rdom/createRoot (js/document.getElementById "app")))
@@ -37,4 +40,5 @@
   (.render root ($ app)))
 
 (defn ^:export init []
+  (>> [:init])
   (render))
