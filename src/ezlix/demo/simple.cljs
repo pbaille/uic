@@ -22,7 +22,7 @@
      (d/h1 "Welcomeu!")
       ;; create elements out of components
      ($ greeting {:name (:name state)})
-     (c :input
+     (c :input#my-input.chouette.pouet
         {:style {:bg {:color "red"}
                  :color "white"
                  :hover {:bg {:color :green}}}
