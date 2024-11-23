@@ -1,9 +1,9 @@
-(ns ezlix.core
-  (:require [helix.core :refer [defnc $ <>]]
-            [stylefy.core :as stylefy]
-            [ezlix.styles :as styles]
-            [ezlix.utils :as u]
-            [clojure.string :as str]))
+(ns ezlix.component
+  #?(:clj (:require [helix.core :refer [$]]
+                    [ezlix.styles :as styles]
+                    [ezlix.utils :as u]
+                    [clojure.string :as str])
+     :cljs (:require-macros [ezlix.component :refer [c]])))
 
 #?(:clj (defn parse-tag [x]
           (let [id? (some #{\#} (seq (name x)))

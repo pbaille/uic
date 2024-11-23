@@ -3,7 +3,7 @@
             ["react-dom/client" :as rdom]
             [stylefy.core :as stylefy]
             [stylefy.generic-dom :as gdom]
-            [ezlix.core :as h :refer-macros [c]]
+            [ezlix.component :refer [c]]
             [ezlix.state :as s :refer [signal sub dbf effect event]]))
 
 (defnc app []
@@ -14,13 +14,10 @@
                      {:foo [(sub [db _] (get db :foo))
                             {:inc (dbf [db _] (update db :foo inc))}]
                       :composite (signal [{x [:get :x] y [:get :y]} _]
-                                         (do (println "signal " x y)
-                                             (+ x y)))
+                                         (+ x y))
                       :pouet {:pong (event [_ _]
-                                           (do (println "here")
-                                               {:pp ["ping"]
-                                                :db {:foo 10 :bar "poukav"}}))}})]
-    (println :po [<< >>])
+                                           {:pp ["ping"]
+                                            :db {:foo 10 :bar "poukav" :x 12 :y 30}})}})]
     (c {:style {:flex [:column]}}
        (c {:style {:text :xl}}
           (<< [:foo]))
@@ -37,10 +34,11 @@
 
            :value (<< [:get :bar])
            :on-change #(>> [:put :bar (.. % -target -value)])})
-       (c (<< [:get :bar])
-          (<< [:get :x])
-          (<< [:foo])
-          (<< [:composite])))))
+       (c {:style {:flex [:row {:gap 2}]}}
+          (c (<< [:get :bar]))
+          (c (<< [:get :x]))
+          (c (<< [:foo]))
+          (c (<< [:composite]))))))
 
 #_(s/register
  {:init (dbf [_ _] {:foo 1 :bar "qux"})

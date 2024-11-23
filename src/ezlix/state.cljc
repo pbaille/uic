@@ -1,11 +1,12 @@
 (ns ezlix.state
   (:require [clojure.string :as str]
+            [ezlix.utils :as u]
             #?@(:cljs [[refx.alpha :as rf]
                        [refx.interceptor :as interceptor]
                        [refx.interceptors :as interceptors]
-                       [refx.db :as refx.db]])
-            [ezlix.utils :as u]
-            [helix.hooks :as hooks])
+                       [refx.db :as refx.db]
+                       [helix.hooks :as hooks]
+                       [cljs.pprint :as pp]]))
   #?(:cljs (:require-macros [ezlix.state :refer [sub dbf event effect]])))
 
 ;; I will try to implement a nice way to declare re-frame subs/events/fxs
@@ -17,12 +18,30 @@
 :rf-event
 :rf-effect
 
-(defn coerce-event [e]
-  (if (vector? e) e [e]))
+(defrecord RFHandler
+           [name type doc interceptors handler])
 
-(defn path->key [path]
-  (keyword (str/join "." (map name path))))
+(do :help
 
+    (defn coerce-event [e]
+      (if (vector? e) e [e]))
+
+    (defn prefix-keyword [prefix kw]
+      (keyword (str (name prefix) "." (name kw))))
+
+    (defn prefix-event-key [prefix event]
+      (into [(prefix-keyword prefix (first event))]
+            (rest event)))
+
+    (defn path->keyword [path]
+      (keyword (str/join "." (map name path))))
+
+    (defn all-paths [x]
+      (cond
+        (instance? RFHandler x) (list (list x))
+        (map? x) (mapcat (fn [[k v]] (map #(cons k %) (all-paths v))) x)
+        (vector? x) (mapcat all-paths x)
+        :else (list (list x)))))
 
 #?(:cljs (do (defn >>
                ([e] (rf/dispatch (coerce-event e)))
@@ -31,41 +50,32 @@
                ([e] (rf/use-sub (coerce-event e)))
                ([x & xs] (<< (into [x] xs))))))
 
-(defrecord RFHandler
-           [name type doc interceptors handler])
-
-(defn all-paths [x]
-  (cond
-    (instance? RFHandler x) (list (list x))
-    (map? x) (mapcat (fn [[k v]] (map #(cons k %) (all-paths v))) x)
-    (vector? x) (mapcat all-paths x)
-    :else (list (list x))))
-
-(defn parse-rf-handler
-
-  [[type fst & nxt :as all]]
-
-  (let [[name fst & nxt]
-        (if (symbol? fst)
-          (cons fst nxt)
-          (concat [nil fst] nxt))
-
-        [doc & nxt]
-        (if (string? fst)
-          (cons fst nxt)
-          (concat ["" fst] nxt))
-
-        [interceptors argv return]
-        (case (count nxt)
-          2 (cons [] nxt)
-          3 nxt)]
-
-    {:type type
-     :doc doc
-     :interceptors interceptors
-     :handler `(fn ~@(when name [name]) ~argv ~return)}))
-
 #?(:clj (do
+
+          (defn parse-rf-handler
+
+            [[type fst & nxt]]
+
+            (let [[name fst & nxt]
+                  (if (symbol? fst)
+                    (cons fst nxt)
+                    (concat [nil fst] nxt))
+
+                  [doc & nxt]
+                  (if (string? fst)
+                    (cons fst nxt)
+                    (concat ["" fst] nxt))
+
+                  [interceptors argv return]
+                  (case (count nxt)
+                    2 (cons [] nxt)
+                    3 nxt)]
+
+              {:type type
+               :doc doc
+               :interceptors interceptors
+               :handler `(fn ~@(when name [name]) ~argv ~return)}))
+
           (defmacro rfn [& xs]
             (list `map->RFHandler (parse-rf-handler xs)))
 
@@ -88,86 +98,60 @@
           (defmacro effect [& xs]
             `(rfn :rf-effect ~@xs))))
 
-#?(:cljs (defn register
-           ([x]
-            (doseq [p (all-paths x)]
-              (let [raw-handler? (fn? (last p))
-                    [path {:keys [interceptors handler type]}]
-                    (if raw-handler?
-                      [(drop-last 2 p) {:type (last (butlast p)) :handler (last p)}]
-                      [(butlast p) (last p)])
-                    key (keyword (str/join "." (map name path)))]
-                (case type
-                  :rf-sub (rf/reg-sub key handler)
-                  :rf-dbf (rf/reg-event-db key interceptors handler)
-                  :rf-event (rf/reg-event-fx key interceptors handler)
-                  :rf-effect (rf/reg-fx key handler)))))
-           ([x & xs]
-            (doseq [x (cons x xs)]
-              (register x)))))
+#?(:cljs (do :global-registration
 
-(comment '(defn instance [& {:keys [interceptors handlers path]
-                             :or {path []
-                                  interceptors []
-                                  handlers {}}}]
-            (doseq [[subpath {:keys [handler type signals]
-                              local-interceptors :interceptors}]
-                    (map (juxt butlast last)
-                         (all-paths handlers))]
-              (let [key (path->key (concat path subpath))]
-                (case type
-                  :rf-sub (if signals
-                            (let [signals (mapv (fn [v]
-                                                  (let [[v & args] (coerce-event v)]
-                                                    (rf/subscribe (into [(path->key conj path v)] args))))
-                                                signals)]
-                              (rf/reg-sub key
-                                          signals
-                                          handler))
-                            (rf/reg-sub key handler))
-                  :rf-dbf (rf/reg-event-db key interceptors handler)
-                  :rf-event (rf/reg-event-fx key interceptors handler)
-                  :rf-effect (rf/reg-fx key handler)))
-              ())))
-
-;; prelude
-#?(:cljs (do (defn prefix-keyword [prefix kw]
-               (keyword (str (name prefix) "." (name kw))))
-
-             (defn prefix-event-key [prefix event]
-               (into [(prefix-keyword prefix (first event))]
-                     (rest event)))
-
-             (defn path->keyword [path]
-               (keyword (str/join "." (map name path))))
+             (defn register
+               ([x]
+                (doseq [p (all-paths x)]
+                  (let [raw-handler? (fn? (last p))
+                        [path {:keys [interceptors handler type]}]
+                        (if raw-handler?
+                          [(drop-last 2 p) {:type (last (butlast p)) :handler (last p)}]
+                          [(butlast p) (last p)])
+                        key (keyword (str/join "." (map name path)))]
+                    (case type
+                      :rf-sub (rf/reg-sub key handler)
+                      :rf-dbf (rf/reg-event-db key interceptors handler)
+                      :rf-event (rf/reg-event-fx key interceptors handler)
+                      :rf-effect (rf/reg-fx key handler)))))
+               ([x & xs]
+                (doseq [x (cons x xs)]
+                  (register x))))
 
              (def default-tree
-               {:get (sub [db [_ x & xs]]
-                          (cond (not x) db
-                                xs (get-in db (cons x xs))
-                                (keyword? x) (get db x)
-                                (sequential? x) (get-in db x)))
+               {:get (ezlix.state/sub [db [_ x & xs]]
+                                      (cond (not x) db
+                                            xs (get-in db (cons x xs))
+                                            (keyword? x) (get db x)
+                                            (sequential? x) (get-in db x)))
 
-                :put (dbf self [db [_ p v & pvs]]
-                          (let [db (cond (sequential? p) (if (seq p) (assoc-in db p v) v)
-                                         (keyword? p) (assoc db p v))]
-                            (if pvs
-                              (self db (into [nil] pvs))
-                              db)))
+                :put (ezlix.state/dbf self [db [_ p v & pvs]]
+                                      (let [db (cond (sequential? p) (if (seq p) (assoc-in db p v) v)
+                                                     (keyword? p) (assoc db p v))]
+                                        (if pvs
+                                          (self db (into [nil] pvs))
+                                          db)))
 
-                :upd (dbf self [db [_ p f & pfs]]
-                          (let [db (cond (sequential? p) (if (seq p) (update-in db p f) (f db))
-                                         (keyword? p) (update db p f))]
-                            (if pfs
-                              (self db (into [nil] pfs))
-                              db)))
+                :upd (ezlix.state/dbf self [db [_ p f & pfs]]
+                                      (let [db (cond (sequential? p) (if (seq p) (update-in db p f) (f db))
+                                                     (keyword? p) (update db p f))]
+                                        (if pfs
+                                          (self db (into [nil] pfs))
+                                          db)))
 
-                :do (event [_ [_ & xs]] {:dispatch-n xs})
+                :do (ezlix.state/event [_ [_ & xs]] {:dispatch-n xs})
 
-                :fx (event [_ [_ fxs]] fxs)
+                :fx (ezlix.state/event [_ [_ fxs]] fxs)
 
-                :pp [(event [_ [_ & xs]] {:pp xs})
-                     (effect [xs] (doseq [x xs] (cljs.pprint/pprint x)))]})
+                :pp [(ezlix.state/event [_ [_ & xs]] {:pp xs})
+                     (ezlix.state/effect [xs] (doseq [x xs] (pp/pprint x)))]})
+
+             (println "easy-frame registering base operation")
+
+             (register default-tree)))
+
+;; prelude
+#?(:cljs (do :sub-frames
 
              (defn sub-effects [root-key]
                (interceptor/->interceptor
@@ -216,20 +200,18 @@
                                                (fn [_ _] (mapv rf/sub prefixed-inputs)))
                                              (fn [_ _] (rf/sub [(mk-key :db)])))
                                            handler))))
-                 (println "all registered")
+                 (println "subframe registered: " id)
                  [(fn init-db [db] (rf/dispatch-sync [:fx {(mk-key :db) db}]))
-                  (fn sub [e] (println "sub to " e) (<< (into [(mk-key (first e))] (rest e))))
-                  (fn dispatch [e] (println "send " e) (>> (into [(mk-key (first e))] (rest e))))]))
+                  (fn sub [e] (<< (into [(mk-key (first e))] (rest e))))
+                  (fn dispatch [e] (>> (into [(mk-key (first e))] (rest e))))]))
 
              (defn use-frame [id db tree]
                (hooks/use-memo :once (let [[init << >>] (register-frame {:id id :tree tree})]
                                        (init db)
-                                       [<< >>])))
-
-             (println "easy-frame registering base operation")
-             (register default-tree)))
+                                       [<< >>])))))
 
 
+^{:clj-kondo/ignore true}
 (comment
   (require '[re-frame.registrar :as rr])
   (deref re-frame.registrar/kind->id->handler)
