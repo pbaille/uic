@@ -72,11 +72,12 @@
           (defmacro sub [& xs]
             `(rfn :rf-sub ~@xs))
 
-          (defmacro signal [event-pattern deps & body]
-            `(map->RFHandler {:type :rf-sub
-                              :handler (fn [~(vec (keys deps)) ~event-pattern]
-                                         ~@body)
-                              :signals ~(vals deps)}))
+          (defmacro signal [[deps event-pattern] & body]
+            (u/prob :expand-signal
+                    `(map->RFHandler {:type :rf-sub
+                                      :handler (fn [~(vec (keys deps)) ~event-pattern]
+                                                 ~@body)
+                                      :inputs ~(vec (vals deps))})))
 
           (defmacro dbf [& xs]
             `(rfn :rf-dbf ~@xs))
@@ -130,7 +131,17 @@
               ())))
 
 ;; prelude
-#?(:cljs (do (def default-tree
+#?(:cljs (do (defn prefix-keyword [prefix kw]
+               (keyword (str (name prefix) "." (name kw))))
+
+             (defn prefix-event-key [prefix event]
+               (into [(prefix-keyword prefix (first event))]
+                     (rest event)))
+
+             (defn path->keyword [path]
+               (keyword (str/join "." (map name path))))
+
+             (def default-tree
                {:get (sub [db [_ x & xs]]
                           (cond (not x) db
                                 xs (get-in db (cons x xs))
@@ -165,15 +176,12 @@
                           (u/prob :prefixed
                                   (assoc context :effects
                                          (reduce (fn [effects [k v]]
-                                                   (assoc effects
-                                                          (keyword (str (name root-key) "." (name k)))
-                                                          v))
-                                                 {}
-                                                 (interceptor/get-effect context)))))}))
+                                                   (assoc effects (prefix-keyword root-key k) v))
+                                                 {} (interceptor/get-effect context)))))}))
 
              (defn register-frame
                [{:keys [tree id]}]
-               (let [mk-key (fn [k] (keyword (str (name id) "." (name k))))
+               (let [mk-key (partial prefix-keyword id)
                      prefixer (sub-effects id)
                      sub-db (refx.interceptors/path id)]
 
@@ -196,15 +204,20 @@
                                                        xs)}))
 
                  (doseq [p (all-paths (merge default-tree tree))]
-                   (let [[path {:keys [interceptors handler type]}] [(butlast p) (last p)]
-                         key (mk-key (keyword (str/join "." (map name path))))]
+                   (let [[path {:keys [interceptors handler type inputs]}] [(butlast p) (last p)]
+                         key (mk-key (path->keyword path))]
                      (case type
-                       :rf-sub (rf/reg-sub key (fn [_] (rf/sub [(mk-key :db)])) handler)
                        :rf-dbf (rf/reg-event-db key (into [sub-db] interceptors) handler)
                        :rf-event (rf/reg-event-fx key (into [prefixer] interceptors) handler)
-                       :rf-effect (rf/reg-fx key handler))))
+                       :rf-effect (rf/reg-fx key handler)
+                       :rf-sub (rf/reg-sub key
+                                           (if inputs
+                                             (let [prefixed-inputs (mapv (partial prefix-event-key id) inputs)]
+                                               (fn [_ _] (mapv rf/sub prefixed-inputs)))
+                                             (fn [_ _] (rf/sub [(mk-key :db)])))
+                                           handler))))
                  (println "all registered")
-                 [(fn init-db [db] (>> [:fx {(mk-key :db) db}]))
+                 [(fn init-db [db] (rf/dispatch-sync [:fx {(mk-key :db) db}]))
                   (fn sub [e] (println "sub to " e) (<< (into [(mk-key (first e))] (rest e))))
                   (fn dispatch [e] (println "send " e) (>> (into [(mk-key (first e))] (rest e))))]))
 
@@ -214,7 +227,7 @@
                                        [<< >>])))
 
              (println "easy-frame registering base operation")
-             (register default-operations)))
+             (register default-tree)))
 
 
 (comment

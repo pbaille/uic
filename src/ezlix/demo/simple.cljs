@@ -1,20 +1,21 @@
 (ns ezlix.demo.simple
-  (:require [helix.core :refer [defnc $ <>]]
-            [helix.hooks :as hooks]
-            [helix.dom :as d]
+  (:require [helix.core :refer [defnc $]]
             ["react-dom/client" :as rdom]
             [stylefy.core :as stylefy]
             [stylefy.generic-dom :as gdom]
             [ezlix.core :as h :refer-macros [c]]
-            [ezlix.state :as s :refer [sub dbf effect event]]))
+            [ezlix.state :as s :refer [signal sub dbf effect event]]))
 
 (defnc app []
 
   (let [[<< >>]
         (s/use-frame :pouetpouet
-                     {:foo 1 :bar "qux"}
+                     {:foo 1 :bar "qux" :x 1 :y 2}
                      {:foo [(sub [db _] (get db :foo))
                             {:inc (dbf [db _] (update db :foo inc))}]
+                      :composite (signal [{x [:get :x] y [:get :y]} _]
+                                         (do (println "signal " x y)
+                                             (+ x y)))
                       :pouet {:pong (event [_ _]
                                            (do (println "here")
                                                {:pp ["ping"]
@@ -37,7 +38,9 @@
            :value (<< [:get :bar])
            :on-change #(>> [:put :bar (.. % -target -value)])})
        (c (<< [:get :bar])
-          (<< [:foo])))))
+          (<< [:get :x])
+          (<< [:foo])
+          (<< [:composite])))))
 
 #_(s/register
  {:init (dbf [_ _] {:foo 1 :bar "qux"})
