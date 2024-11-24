@@ -3,7 +3,7 @@
             ["react-dom/client" :as rdom]
             [stylefy.core :as stylefy]
             [stylefy.generic-dom :as gdom]
-            [ezlix.component :refer [c]]
+            [ezlix.component :refer [c c*]]
             [ezlix.state :as s :refer [signal sub dbf effect event]]))
 
 (defnc app []
@@ -38,7 +38,20 @@
           (c (<< [:get :bar]))
           (c (<< [:get :x]))
           (c (<< [:foo]))
-          (c (<< [:composite]))))))
+          (c (<< [:composite])))
+       (c {:style {:flex [:row {:gap 2}]}
+           :children [(c (<< [:get :bar]))
+                      (c (<< [:get :x]))
+                      (c (<< [:foo]))
+                      (c (<< [:composite]))]})
+       (c* {:style {:flex [:row {:gap 2}]}}
+           [(c (<< [:get :bar]))
+            (c (<< [:get :x]))
+            (c (<< [:foo]))
+            (c (<< [:composite]))])
+       (c* {:style {:color [:gray {:a 0.1}]}}
+           (vec (range 36)))
+       #_(c {:children (vec (range 36))}))))
 
 #_(s/register
  {:init (dbf [_ _] {:foo 1 :bar "qux"})
@@ -55,6 +68,7 @@
 
 (defn ^:dev/after-load render []
   (.render root ($ app)))
+
 
 (defn ^:export init []
   (stylefy/init {:dom (gdom/init)})
