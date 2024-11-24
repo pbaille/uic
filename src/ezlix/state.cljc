@@ -107,7 +107,7 @@
                 :fx (ezlix.state/event [_ [_ fxs]] fxs)
 
                 :pp [(ezlix.state/event [_ [_ & xs]] {:pp xs})
-                     (ezlix.state/effect [xs] (doseq [x xs] (pp/pprint x)))]})
+                     (ezlix.state/effect [_ xs] (doseq [x xs] (pp/pprint x)))]})
 
              (defn register [frame tree]
                (doseq [p (all-paths tree)]
@@ -120,7 +120,7 @@
                    (case type
                      :rf-dbf (rf/reg-event-db frame key interceptors handler)
                      :rf-event (rf/reg-event-fx frame key interceptors handler)
-                     :rf-effect (rf/reg-fx frame key handler)
+                     :rf-effect (rf/reg-fx frame key (partial handler frame))
                      :rf-sub (if-not inputs
                                (rf/reg-sub frame key handler)
                                (rf/reg-sub frame
