@@ -128,6 +128,10 @@
                                            (fn [_ _] (mapv (partial rf/sub frame) inputs))
                                            handler))))))))
 
+#?(:cljs (do :aliases
+
+             (defn >> [frame event] (rf/dispatch frame event))))
+
 ;; prelude
 #?(:cljs (do :init-and-hook
 
