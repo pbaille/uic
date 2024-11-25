@@ -2,7 +2,9 @@
   (:require [stylefy.core :as stylefy]
             [ezlix.utils :as u]
             [ezlix.styles.mixins :as s]
-            [clojure.string :as str])
+            [clojure.string :as str]
+            [helix.hooks :as hh])
+  #?(:clj (:require [helix.impl.analyzer :as hana]))
   #_(:cljs (:require-macros [ezlix.core :refer []])))
 
 ;; impl
@@ -120,44 +122,52 @@
 (defn style_usable [style]
   (u/prob :usable-styles
    (let [[style & manual] (-> style style_mk style_emit)]
-     (assoc style :stylefy.core/manual (vec manual)))))
+     (if (seq manual)
+       (assoc style :stylefy.core/manual (vec manual))
+       style))))
 
-(do :compiler
+#?(:clj (do :compiler
 
-    (defn compiler_dynamic? [x]
-      (or (symbol? x)
-          (seq? x)))
+            (defn compiler_dynamic? [x]
+              (or (symbol? x)
+                  (seq? x)))
 
-    (defn compiler_merge [x y]
-      (cond
-        (nil? x) y
-        (nil? y) x
+            (defn compiler_merge [x y]
+              (cond
+                (nil? x) y
+                (nil? y) x
 
-        (and (map? x) (map? y))
-        (merge-with compiler_merge x y)
+                (and (map? x) (map? y))
+                (merge-with compiler_merge x y)
 
-        (or (compiler_dynamic? x)
-            (compiler_dynamic? y)) `(km+ ~x ~y)
+                (or (compiler_dynamic? x)
+                    (compiler_dynamic? y)) `(km+ ~x ~y)
 
-        :else y))
+                :else y))
 
-    (defn compiler_unspread [x]
-      (cond (compiler_dynamic? x) x
-            (map? x) (if-let [spread (:& x)]
-                       (if (vector? spread)
-                         (reduce compiler_merge (dissoc x :&) spread)
-                         (compiler_merge x spread))
-                       x)
-            (nil? x) {}
-            :else (u/error "bad argument " `compiler_styles ":\n" x)))
+            (defn compiler_unspread [x]
+              (cond (compiler_dynamic? x) x
+                    (map? x) (if-let [spread (:& x)]
+                               (if (vector? spread)
+                                 (reduce compiler_merge (dissoc x :&) spread)
+                                 (compiler_merge x spread))
+                               x)
+                    (nil? x) {}
+                    :else (u/error "bad argument " `compiler_styles ":\n" x)))
 
-    (defn compiler_usable-styles [styles]
-      (if (map? styles)
-        (style_usable styles)
-        `(style_usable ~styles)))
+            (defn compiler_has-deps? [env styles]
+              (seq (hana/resolve-local-vars env styles)))
 
-    #?(:clj (defmacro props [styles props]
-              (if (not styles)
-                props
-                `(stylefy/use-style ~(compiler_usable-styles (compiler_unspread styles))
-                                    ~(compiler_unspread props))))))
+            (defn compiler_usable-styles [env styles]
+              ;(println "deps-check " env styles)
+              ;(println (compiler_deps-free? env styles))
+              (if (compiler_has-deps? env styles)
+                `(hh/use-memo :auto-deps (style_usable ~styles))
+                (style_usable styles)))
+
+            (defn compile-props [env styles props]
+              (u/prob :expand-props
+                      (if (not styles)
+                        props
+                        `(stylefy/use-style ~(compiler_usable-styles env (compiler_unspread styles))
+                                            ~(compiler_unspread props)))))))

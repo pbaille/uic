@@ -30,7 +30,7 @@
               [& xs]
               (let [{:keys [tag props children]} (parse-c xs)
                     spread (if-let [styles (:style props)]
-                             (macroexpand-1 `(styles/props ~styles ~(:& props {})))
+                             (styles/compile-props &env styles (:& props {}))
                              (:& props))]
                 (u/prob :expand-c
                         `($ ~tag
@@ -43,7 +43,7 @@
               [& xs]
               (let [{:keys [tag props children]} (parse-c* xs)
                     spread (if-let [styles (:style props)]
-                             (macroexpand-1 `(styles/props ~styles ~(:& props {})))
+                             (styles/compile-props &env styles (:& props {}))
                              (:& props))]
                 (u/prob :expand-c*
                         `($ ~tag
