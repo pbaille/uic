@@ -159,7 +159,7 @@
         (update :color css-color))))
 
 (defn prefix-keys [prefix m]
-  (u/map-keys
+  (update-keys
     (fn [k] (keyword (str (name prefix) (name k))))
     m))
 
@@ -207,7 +207,7 @@
          :right (rounded nil v v nil)
          :left (rounded v nil nil v)))
      (map? x)
-     (reduce rounded {} x)
+     (reduce merge {} (map rounded x))
      :else
      (rounded x x x x)))
   ([tl tr br bl]
