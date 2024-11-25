@@ -3,9 +3,7 @@
             [ezlix.utils :as u]
             [ezlix.styles.mixins :as s]
             [clojure.string :as str]
-            [helix.hooks :as hh])
-  #?(:clj (:require [helix.impl.analyzer :as hana]))
-  #_(:cljs (:require-macros [ezlix.core :refer []])))
+            [helix.hooks :as hh]))
 
 ;; impl
 ;; -----------------------------------------------------------
@@ -130,7 +128,13 @@
 
             (defn compiler_dynamic? [x]
               (or (symbol? x)
-                  (seq? x)))
+                  (seq? x)
+                  (cond (map? x) (or (contains? x :&)
+                                     (some (fn [[k v]]
+                                             (or (compiler_dynamic? k)
+                                                 (compiler_dynamic? v)))
+                                           x))
+                        (vector? x) (some compiler_dynamic? x))))
 
             (defn compiler_merge [x y]
               (cond
@@ -146,28 +150,25 @@
                 :else y))
 
             (defn compiler_unspread [x]
-              (cond (compiler_dynamic? x) x
+              (cond (or (symbol? x) (seq? x)) x
                     (map? x) (if-let [spread (:& x)]
                                (if (vector? spread)
                                  (reduce compiler_merge (dissoc x :&) spread)
                                  (compiler_merge x spread))
                                x)
                     (nil? x) {}
-                    :else (u/error "bad argument " `compiler_styles ":\n" x)))
+                    :else (u/error "bad argument " `compiler_unspread ":\n" x)))
 
-            (defn compiler_has-deps? [env styles]
-              (seq (hana/resolve-local-vars env styles)))
-
-            (defn compiler_usable-styles [env styles]
+            (defn compiler_usable-styles [styles]
               ;(println "deps-check " env styles)
               ;(println (compiler_deps-free? env styles))
-              (if (compiler_has-deps? env styles)
+              (if (compiler_dynamic? styles)
                 `(hh/use-memo :auto-deps (style_usable ~styles))
                 (style_usable styles)))
 
-            (defn compile-props [env styles props]
+            (defn compile-props [styles props]
               (u/prob :expand-props
                       (if (not styles)
                         props
-                        `(stylefy/use-style ~(compiler_usable-styles env (compiler_unspread styles))
+                        `(stylefy/use-style ~(compiler_usable-styles (compiler_unspread styles))
                                             ~(compiler_unspread props)))))))

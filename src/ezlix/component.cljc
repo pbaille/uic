@@ -1,6 +1,6 @@
 (ns ezlix.component
+  (:require [ezlix.styles :as styles])
   #?(:clj (:require [helix.core :refer [$]]
-                    [ezlix.styles :as styles]
                     [clojure.string :as str]
                     [ezlix.utils :as u])
      :cljs (:require-macros [ezlix.component :refer [c c*]])))
@@ -30,7 +30,7 @@
               [& xs]
               (let [{:keys [tag props children]} (parse-c xs)
                     spread (if-let [styles (:style props)]
-                             (styles/compile-props &env styles (:& props {}))
+                             (styles/compile-props styles (:& props {}))
                              (:& props))]
                 (u/prob :expand-c
                         `($ ~tag
@@ -43,7 +43,7 @@
               [& xs]
               (let [{:keys [tag props children]} (parse-c* xs)
                     spread (if-let [styles (:style props)]
-                             (styles/compile-props &env styles (:& props {}))
+                             (styles/compile-props styles (:& props {}))
                              (:& props))]
                 (u/prob :expand-c*
                         `($ ~tag

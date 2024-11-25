@@ -44,13 +44,18 @@
                       (c (<< [:get :x]))
                       (c (<< [:foo]))
                       (c (<< [:composite]))]})
+
        (c* {:style {:flex [:row {:gap 2}]}}
            [(c (<< [:get :bar]))
             (c (<< [:get :x]))
             (c (<< [:foo]))
             (c (<< [:composite]))])
+
        (c* {:style {:color [:gray {:a 0.1}]}}
            (vec (range 36)))
+
+       (c {:style {:width (str 10 "px")}}
+          "io")
        #_(c {:children (vec (range 36))}))))
 
 #_(s/register
