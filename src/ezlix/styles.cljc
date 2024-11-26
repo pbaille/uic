@@ -118,7 +118,8 @@
              (concat modes pseudo sub))))
 
 (defn style_usable [style]
-  (u/prob :usable-styles
+  #_(println "usable styles " style)
+  (do u/prob :usable-styles
    (let [[style & manual] (-> style style_mk style_emit)]
      (if (seq manual)
        (assoc style :stylefy.core/manual (vec manual))
@@ -151,6 +152,7 @@
 
             (defn compiler_unspread [x]
               (cond (or (symbol? x) (seq? x)) x
+                    (vector? x) (reduce compiler_merge {} x)
                     (map? x) (if-let [spread (:& x)]
                                (if (vector? spread)
                                  (reduce compiler_merge (dissoc x :&) spread)
@@ -163,11 +165,12 @@
               ;(println "deps-check " env styles)
               ;(println (compiler_deps-free? env styles))
               (if (compiler_dynamic? styles)
-                `(hh/use-memo :auto-deps (style_usable ~styles))
+                `(let [styles# ~styles]
+                   (hh/use-memo [styles#] (style_usable ~styles#)))
                 (style_usable styles)))
 
             (defn compile-props [styles props]
-              (u/prob :expand-props
+              (do u/prob :expand-props
                       (if (not styles)
                         props
                         `(stylefy/use-style ~(compiler_usable-styles (compiler_unspread styles))

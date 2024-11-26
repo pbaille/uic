@@ -9,15 +9,17 @@
 (defnc app []
 
   (let [[<< >>]
-        (s/use-frame :pouetpouet
-                     {:foo 1 :bar "qux" :x 1 :y 2}
-                     {:foo [(sub [db _] (get db :foo))
-                            {:inc (dbf [db _] (update db :foo inc))}]
-                      :composite (signal [{x [:get :x] y [:get :y]} _]
-                                         (+ x y))
-                      :pouet {:pong (event [_ _]
-                                           {:pp ["ping"]
-                                            :db {:foo 10 :bar "poukav" :x 12 :y 30}})}})]
+        (s/use-frame* :pouetpouet
+                      {:init (dbf [_ _]
+                                  {:db {:foo 1 :bar "qux" :x 1 :y 2}})
+                       :foo [(sub [db _] (get db :foo))
+                             {:inc (dbf [db _] (update db :foo inc))}]
+                       :composite (signal [{x [:get :x] y [:get :y]} _]
+                                          (+ x y))
+                       :pouet {:pong (event [_ _]
+                                            {:pp ["ping"]
+                                             :db {:foo 10 :bar "poukav" :x 12 :y 30}})}}
+                      [:init])]
     (c {:style {:flex [:column]}}
        (c {:style {:text :xl}}
           (<< [:foo]))
@@ -57,16 +59,6 @@
        (c {:style {:width (str 10 "px")}}
           "io")
        #_(c {:children (vec (range 36))}))))
-
-#_(s/register
- {:init (dbf [_ _] {:foo 1 :bar "qux"})
-  :foo [(sub [db _] (get db :foo))
-        {:inc (dbf [db _] (update db :foo inc))}]
-  :pouet {:pong (event [_ _]
-                       (do (println "here"){:pp "ping"}))}
-  :subframe (event [(s/sub-frame [:pouet])]
-                   [_ [_ e]]
-                   {:dispatch [:pong]})})
 
 ;; start your app with your favorite React renderer
 (defonce root (rdom/createRoot (js/document.getElementById "app")))

@@ -32,7 +32,7 @@
                     spread (if-let [styles (:style props)]
                              (styles/compile-props styles (:& props {}))
                              (:& props))]
-                (u/prob :expand-c
+                (do u/prob :expand-c
                         `($ ~tag
                             ~(merge (dissoc props :style :&)
                                     (when spread {:& spread}))
@@ -45,7 +45,7 @@
                     spread (if-let [styles (:style props)]
                              (styles/compile-props styles (:& props {}))
                              (:& props))]
-                (u/prob :expand-c*
+                (do u/prob :expand-c*
                         `($ ~tag
                             ~(-> props
                                  (assoc :children children)

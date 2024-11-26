@@ -159,9 +159,10 @@
         (update :color css-color))))
 
 (defn prefix-keys [prefix m]
-  (update-keys
-    (fn [k] (keyword (str (name prefix) (name k))))
-    m))
+  (update-keys m
+               (fn [k] (keyword (str (name prefix) (name k))))))
+
+update-keys
 
 (defn border
   ([{:as opts
