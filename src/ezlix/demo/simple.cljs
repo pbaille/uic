@@ -4,61 +4,48 @@
             [stylefy.core :as stylefy]
             [stylefy.generic-dom :as gdom]
             [ezlix.component :refer [c]]
-            [ezlix.state :as s :refer [signal sub dbf effect event]]))
+            [ezlix.state :as s :refer [signal sub dbf effect event]]
+            ))
 
-(defui app [{}]
+(def tree
+  {:init (dbf [_ _]
+              {:name "foo" :x 1 :y 2})
+   :name (sub [db _] (get db :name))
+   :xy (signal [{x [:get :x] y [:get :y]} _]
+               (+ x y))
+   :reset (event [_ _]
+                 {:pp ["reset"]
+                  :db {:name "nono" :x 12 :y 30}})})
+
+(defui app []
 
   (let [[<< >>]
         (s/use-frame* :pouetpouet
-                      {:init (dbf [_ _]
-                                  {:foo 1 :bar "qux" :x 1 :y 2})
-                       :foo [(sub [db _] (get db :foo))
-                             {:inc (dbf [db _] (update db :foo inc))}]
-                       :composite (signal [{x [:get :x] y [:get :y]} _]
-                                          (+ x y))
-                       :pouet {:pong (event [_ _]
-                                            {:pp ["ping"]
-                                             :db {:foo 10 :bar "poukav" :x 12 :y 30}})}}
-                      {:foo "foo"}
+                      tree
+                      {:name "pouet"}
                       [:init])]
     (c {:style {:flex [:column]}}
        (c {:style {:text :xl}}
-          (<< [:foo]))
-       (c {:style {:text :xl}}
-          (<< [:get [:bar]]))
+          (<< [:name]))
        (c :button
-          {:on-click (fn [_] (>> [:foo.inc]))}
-          "inc foo")
+          {:on-click (fn [_] (println "inc x") (>> [:put [:x] 34]))}
+          "inc x")
        (c :button
-          {:on-click (fn [_] (>> [:pouet.pong]))}
-          "pong")
+          {:on-click (fn [_] (>> [:reset]))}
+          "reset")
        (c :input#my-input.chouette.pouet
           {:style {:bg {:color "red"}
                    :color "white"
                    :hover {:bg {:color :green}}}
 
-           :value (<< [:get :bar])
-           :on-change #(>> [:put :bar (.. % -target -value)])})
+           :default-value (<< [:get :name])
+           :on-change #(>> [:put :name (.. % -target -value)])})
        (c {:style {:flex [:row {:gap 2}]}}
-          (c (<< [:get :bar]))
           (c (<< [:get :x]))
-          (c (<< [:foo]))
-          (c (<< [:composite])))
-       (c {:style {:flex [:row {:gap 2}]}
-           }
-          [(c (<< [:get :bar]))
-            (c (<< [:get :x]))
-            (c (<< [:foo]))
-            (c (<< [:composite]))])
-
-       #_(c* {:style {:flex [:row {:gap 2}]}}
-             [(c (<< [:get :bar]))
-              (c (<< [:get :x]))
-              (c (<< [:foo]))
-              (c (<< [:composite]))])
-
-       #_(c* {:style {:color [:gray {:a 0.1}]}}
-             (vec (range 36)))
+          (c (<< [:get :y]))
+          (c (<< [:xy])))
+       (c {:style {:color [:gray {:a 0.1}]}}
+          (vec (range 36)))
 
        (c {:style {:width (str 10 "px")}}
           "io")

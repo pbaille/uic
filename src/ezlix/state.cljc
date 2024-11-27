@@ -156,6 +156,6 @@
                                 (when init (rf/dispatch-sync frame init))
                                 [(rf/subscription-hook frame)
                                  (partial rf/dispatch frame)]))
-                       [id tree db init])]
+                       [id db tree init])]
                  (println "use-frame* ret " [subscribe dispatch])
                  [subscribe dispatch]))))
