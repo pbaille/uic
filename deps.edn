@@ -7,4 +7,5 @@
         stylefy/generic-dom {:mvn/version "3.0.0"}
         thi.ng/color {:mvn/version "1.5.1"}
         moi/refx {:local/root "/Users/pierrebaille/Code/Forks/refx"}
-        moi/helix {:local/root "/Users/pierrebaille/Code/Forks/helix"}}}
+        com.pitch/uix.core {:mvn/version "1.2.0"}
+        com.pitch/uix.dom {:mvn/version "1.2.0"}}}

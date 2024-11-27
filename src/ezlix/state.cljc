@@ -1,13 +1,13 @@
 (ns ezlix.state
   (:require [clojure.string :as str]
             [ezlix.utils :as u]
-            [helix.hooks :as hooks]
+            [uix.core]
             #?@(:cljs [[refx.alpha :as rf]
                        [refx.interceptor :as interceptor]
                        [refx.interceptors :as interceptors]
                        [refx.db :as refx.db]
                        [cljs.pprint :as pp]]))
-  #?(:cljs (:require-macros [ezlix.state :refer [sub dbf event effect use-frame]])))
+  #?(:cljs (:require-macros [ezlix.state :refer [sub dbf event effect]])))
 
 ;; I will try to implement a nice way to declare re-frame subs/events/fxs
 
@@ -148,26 +148,14 @@
 
              (defn use-frame* [id tree db & [init]]
                (let [[subscribe dispatch]
-                     (hooks/use-memo :once (let [frame (rf/new-frame)]
-                                             (println "frame memo exec")
-                                             (register frame (merge default-tree tree))
-                                             (rf/dispatch-sync frame [:fx {:db db}])
-                                             [(rf/subscription-hook frame)
-                                              (partial rf/dispatch frame)]))]
-                 (hooks/use-effect :once (do (println "frame fx exec")
-                                             (when init (dispatch init))
-                                             (println "subframe registered: " id)))
+                     (uix.core/use-memo
+                       (fn [] (let [frame (rf/new-frame)]
+                                (println "frame memo exec")
+                                (register frame (merge default-tree tree))
+                                (rf/dispatch-sync frame [:fx {:db db}])
+                                (when init (rf/dispatch-sync frame init))
+                                [(rf/subscription-hook frame)
+                                 (partial rf/dispatch frame)]))
+                       [id tree db init])]
                  (println "use-frame* ret " [subscribe dispatch])
-                 [subscribe dispatch])))
-
-   :clj (defmacro use-frame [id tree init]
-          (u/prob :expand-use-frame
-                  `(let [[frame# subscribe# dispatch#]
-                         (hooks/use-memo :once (let [f# (rf/new-frame)]
-                                                 [f#
-                                                  (rf/subscription-hook f#)
-                                                  (partial rf/dispatch f#)]))]
-                     (hooks/use-effect :once (do (register frame# (merge default-tree ~tree))
-                                                 (when-let [init# ~init] (rf/dispatch-sync frame# init#))
-                                                 (println "subframe registered: " ~id)))
-                     [subscribe# dispatch#]))))
+                 [subscribe dispatch]))))

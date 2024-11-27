@@ -3,7 +3,7 @@
             [ezlix.utils :as u]
             [ezlix.styles.mixins :as s]
             [clojure.string :as str]
-            [helix.hooks :as hh]))
+            [uix.core]))
 
 ;; impl
 ;; -----------------------------------------------------------
@@ -165,13 +165,15 @@
               ;(println "deps-check " env styles)
               ;(println (compiler_deps-free? env styles))
               (if (compiler_dynamic? styles)
-                `(let [styles# ~styles]
-                   (hh/use-memo [styles#] (style_usable ~styles#)))
+                #_`(let [s# ~styles]
+                     (uix.core/use-memo (fn [] (style_usable s#))
+                       [s#]))
+                `(style_usable ~styles)
                 (style_usable styles)))
 
             (defn compile-props [styles props]
               (do u/prob :expand-props
-                      (if (not styles)
-                        props
-                        `(stylefy/use-style ~(compiler_usable-styles (compiler_unspread styles))
-                                            ~(compiler_unspread props)))))))
+                  (if (not styles)
+                    props
+                    `(stylefy/use-style ~(compiler_usable-styles (compiler_unspread styles))
+                                        ~(compiler_unspread props)))))))
