@@ -19,6 +19,6 @@
                 (do u/prob :expand-c
                     `($ ~tag
                         ~(if-let [styles (:style props)]
-                           (styles/compile-props styles (dissoc props :style))
+                           (styles/compile-props2 styles (dissoc props :style))
                            props)
                         ~@children))))))

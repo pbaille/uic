@@ -1,4 +1,5 @@
 (ns ezlix.styles
+  (:refer-clojure :exclude [compile])
   (:require [stylefy.core :as stylefy]
             [ezlix.utils :as u]
             [ezlix.styles.mixins :as s]
@@ -53,77 +54,91 @@
 ;; It will support regular hiccup inline-styles along with css nested selectors, pseudo classes and modes
 ;; the whole in a unified and expressive API powered by a css-mixin library
 
-(def style_modes
+(def modes
   #{:active :blank :checked :current :default :link
     :disabled :enabled :focus :hover :valid :visited})
 
-(def style_pseudo-elements
+(def pseudo-elements
   #{"after" "backdrop" "before" "cue" "first-letter" "first-line" "part"
     "grammar-error" "marker" "placeholder" "selection" "spelling-error"})
 
-(defn style_key [& xs]
-  (keyword (str/join "-" (map name xs))))
-
-(defn style_modal-selector [x]
+(defn modal-selector [x]
   (keyword (str "&" x)))
 
-(defn style_pseudo-selector [x]
+(defn pseudo-selector [x]
   (and (keyword? x)
        (namespace x)
-       (style_pseudo-elements (name x))
+       (pseudo-elements (name x))
        (str "&::" (name x))))
 
-(defn style_selector? [x]
+(defn selector?
+  "only support class and id selector for now."
+  [x]
   (or (string? x)
       (-> x name first #{"." "#"})))
 
-(defn style_expand-mixins
+(defn expand-mixins
   [x]
   (reduce (fn [ret [k v]]
-            (km+ ret (if-let [f (s/mixin k)]
+            (merge ret (if-let [f (s/mixin k)]
                        (if (vector? v) (apply f v) (f v))
                        {k v})))
-          {} (km x)))
+          {} x))
 
-(defn style_compile [x]
-  (let [f (partial u/map-vals style_compile)]
-    (-> (update x :self style_expand-mixins)
+(defn compile [x]
+  (let [f (partial u/map-vals compile)]
+    (-> (update x :self expand-mixins)
         (update :pseudo f)
         (update :modes f)
         (update :sub f))))
 
-(declare style_mk)
+(declare mk)
 
-(defn style_parse [x]
+(defn parse [x]
   (reduce
    (fn [a [k v]]
      (cond
-       (style_selector? k) (assoc-in a [:sub k] (style_mk v))
-       (style_modes k) (assoc-in a [:modes (style_modal-selector k)] (style_mk v))
-       (style_pseudo-selector k) (assoc-in a [:pseudo (style_pseudo-selector k)] (style_mk v))
+       (selector? k) (assoc-in a [:sub k] (mk v))
+       (modes k) (assoc-in a [:modes (modal-selector k)] (mk v))
+       (pseudo-selector k) (assoc-in a [:pseudo (pseudo-selector k)] (mk v))
        :else (assoc-in a [:self k] v)))
    {} x))
 
-(defn style_mk [x]
+(defn mk [x]
   (cond
     (nil? x) {}
-    (map? x) (-> x style_parse style_compile)
-    :else (u/error "bad argument to " `style_mk ":\n" x)))
+    (map? x) (-> x parse compile)
+    :else (u/error "bad argument to " `mk ":\n" x)))
 
-(defn style_emit
+(defn emit
   [{:as parsed-style
     :keys [sub self modes pseudo]}]
   (into [self]
-        (map (fn [[k v]] (into [k] (style_emit v)))
+        (map (fn [[k v]] (into [k] (emit v)))
              (concat modes pseudo sub))))
 
-(defn style_usable [style]
+(defn usable [style]
   #_(println "usable styles " style)
   (do u/prob :usable-styles
-   (let [[style & manual] (-> style style_mk style_emit)]
+   (let [[style & manual] (-> style mk emit)]
      (if (seq manual)
        (assoc style :stylefy.core/manual (vec manual))
        style))))
+
+(def usable-memo (memoize usable))
+
+(defn merge-usable
+  ([style1 style2]
+   (let [base (merge style1 style2)]
+     (if (:stylefy.core/manual base)
+       (assoc base
+              :stylefy.core/manual (into (get style1 :stylefy.core/manual [])
+                                         (get style2 :stylefy.core/manual [])))
+       base)))
+  ([x y & zs]
+   (reduce merge-usable
+           (merge-usable x y)
+           zs)))
 
 #?(:clj (do :compiler
 
@@ -162,18 +177,47 @@
                     :else (u/error "bad argument " `compiler_unspread ":\n" x)))
 
             (defn compiler_usable-styles [styles]
-              ;(println "deps-check " env styles)
-              ;(println (compiler_deps-free? env styles))
               (if (compiler_dynamic? styles)
                 #_`(let [s# ~styles]
-                     (uix.core/use-memo (fn [] (style_usable s#))
+                     (uix.core/use-memo (fn [] (usable s#))
                        [s#]))
-                `(style_usable ~styles)
-                (style_usable styles)))
+                `(usable-memo ~styles)
+                (usable-memo styles)))
 
             (defn compile-props [styles props]
               (do u/prob :expand-props
                   (if (not styles)
                     props
                     `(stylefy/use-style ~(compiler_usable-styles (compiler_unspread styles))
-                                        ~(compiler_unspread props)))))))
+                                        ~(compiler_unspread props)))))
+
+            (do :new
+
+                (defn compiler_split [m]
+                  (assert (map? m)
+                          (str "compiler_split expect a map, got:\n" m))
+                  (reduce (fn [ret [k v]]
+                            (if (compiler_dynamic? v)
+                              (update ret :dynamic assoc k v)
+                              (update ret :static assoc k v)))
+                          {:dynamic {} :static {} :spread (:& m)}
+                          m))
+
+                (defn compiler_prepare-styles [styles]
+                  (cond (vector? styles) (compiler_prepare-styles {:& styles})
+                        (map? styles) (let [{:keys [static dynamic spread]} (compiler_split styles)]
+                                        (cond (not (seq static)) (let [xs (cons dynamic spread)]
+                                                                   (case (count xs)
+                                                                     0 {}
+                                                                     1 `(usable ~(first xs))
+                                                                     `(merge-usable ~dynamic ~@spread)))
+                                              (or (seq dynamic) (seq spread)) `(merge-usable ~(usable static) ~dynamic ~@spread)
+                                              :else (usable static)))
+                        :else `(usable ~styles)))
+
+                (defn compile-props2 [styles props]
+                  (if (not styles)
+                    props
+                    (do u/prob :compile-props2
+                        `(stylefy/use-style ~(compiler_prepare-styles styles)
+                                            ~(compiler_unspread props))))))))
