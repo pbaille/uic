@@ -1,9 +1,9 @@
-(ns ezlix.component
-  (:require [ezlix.styles :as styles]
+(ns uic.component
+  (:require [uic.styles :as styles]
             [uix.core :refer [$]])
   #?(:clj (:require [clojure.string :as str]
-                    [ezlix.utils :as u])
-     :cljs (:require-macros [ezlix.component :refer [c]])))
+                    [uic.utils :as u])
+     :cljs (:require-macros [uic.component :refer [c]])))
 
 #?(:clj (do (defn parse-c [xs]
               (let [[tag xs] (if (keyword? (first xs))

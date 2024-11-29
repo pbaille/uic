@@ -1,5 +1,5 @@
-(ns ezlix.utils.css
-  #?(:cljs (:require-macros [ezlix.utils.css :refer [calc]])))
+(ns uic.utils.css
+  #?(:cljs (:require-macros [uic.utils.css :refer [calc]])))
 
 (defn size [x]
   (cond (number? x) (str x "px")

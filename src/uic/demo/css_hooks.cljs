@@ -1,11 +1,11 @@
-(ns ezlix.demo.css-hooks
+(ns uic.demo.css-hooks
   (:require [uix.core :refer [defui $]]
             [uix.dom]
             [stylefy.core :as stylefy]
             [stylefy.generic-dom :as gdom]
-            [ezlix.component :refer [c]]
-            [ezlix.state :as s :refer [signal sub dbf effect event]]
-            [ezlix.css :as css]))
+            [uic.component :refer [c]]
+            [uic.state :as s :refer [signal sub dbf effect event]]
+            [uic.css :as css]))
 
 (defui app []
   ($ :div

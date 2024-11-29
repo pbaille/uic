@@ -1,7 +1,7 @@
-(ns ezlix.styles.dimensions
-  (:require [ezlix.utils :as u]
+(ns uic.styles.dimensions
+  (:require [uic.utils :as u]
             [clojure.string :as str])
-  #?(:cljs (:require-macros [ezlix.styles.dimensions :refer [calc]])))
+  #?(:cljs (:require-macros [uic.styles.dimensions :refer [calc]])))
 
 (def scale-aliases
   {:base 0 :md 0

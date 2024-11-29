@@ -1,9 +1,9 @@
-(ns ezlix.styles.colors
+(ns uic.styles.colors
   (:require [thi.ng.math.core :as m]
             [thi.ng.color.core :as c]
             [thi.ng.color.presets :as cp]
             [thi.ng.color.gradients :as cg]
-            [ezlix.utils :as u]))
+            [uic.utils :as u]))
 
 (def user-presets* (atom {}))
 

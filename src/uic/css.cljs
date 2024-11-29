@@ -1,8 +1,8 @@
-(ns ezlix.css
+(ns uic.css
   (:require ["@css-hooks/react" :as css-hooks]
             [uix.core :refer [defui $]]
             [uix.dom]
-            [ezlix.styles.mixins :as mixins]))
+            [uic.styles.mixins :as mixins]))
 
 
 (defn wrap-css [css comp]

@@ -4,15 +4,15 @@
  :nrepl {:port 8777}
 
  :builds {:css-hooks {:target :browser
-                      :modules {:main {:init-fn ezlix.demo.css-hooks/init
-                                       :reload-fn ezlix.demo.css-hooks/render}}
+                      :modules {:main {:init-fn uic.demo.css-hooks/init
+                                       :reload-fn uic.demo.css-hooks/render}}
                       :devtools {:http-root "public"
                                  :http-port 8888
                                  :preloads [uix.preload devtools.preload]}}
           :app
           {:target :browser
-           :modules {:main {:init-fn ezlix.demo.simple/init
-                            :reload-fn ezlix.demo.simple/render}}
+           :modules {:main {:init-fn uic.demo.simple/init
+                            :reload-fn uic.demo.simple/render}}
            :devtools {:http-root "public"
                       :http-port 8888
                       :preloads [uix.preload devtools.preload]}}}}

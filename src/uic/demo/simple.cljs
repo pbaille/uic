@@ -1,10 +1,10 @@
-(ns ezlix.demo.simple
+(ns uic.demo.simple
   (:require [uix.core :refer [defui $]]
             [uix.dom]
             [stylefy.core :as stylefy]
             [stylefy.generic-dom :as gdom]
-            [ezlix.component :refer [c]]
-            [ezlix.state :as s :refer [signal sub dbf effect event]]
+            [uic.component :refer [c]]
+            [uic.state :as s :refer [signal sub dbf effect event]]
             ))
 
 (def tree

@@ -1,9 +1,9 @@
-(ns ezlix.utils
+(ns uic.utils
   (:require
     [clojure.string :as str]
     [clojure.walk :refer [postwalk]]
     [#?(:cljs cljs.pprint :clj clojure.pprint) :as pp])
-  #?(:cljs (:require-macros [ezlix.utils :refer [defn+]])))
+  #?(:cljs (:require-macros [uic.utils :refer [defn+]])))
 
 ;; printlng debugging
 ;; ------------------------------------------------------------

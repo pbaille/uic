@@ -1,9 +1,9 @@
-(ns ezlix.styles.mixins
+(ns uic.styles.mixins
   (:refer-clojure :exclude [float floats])
-  (:require [ezlix.utils.css :as css]
-            [ezlix.utils :as u]
-            [ezlix.styles.colors :as sc]
-            [ezlix.styles.dimensions :as dims]
+  (:require [uic.utils.css :as css]
+            [uic.utils :as u]
+            [uic.styles.colors :as sc]
+            [uic.styles.dimensions :as dims]
             [clojure.string :as str]))
 
 ;; colors

@@ -1,8 +1,8 @@
-(ns ezlix.styles
+(ns uic.styles
   (:refer-clojure :exclude [compile])
   (:require [stylefy.core :as stylefy]
-            [ezlix.utils :as u]
-            [ezlix.styles.mixins :as s]
+            [uic.utils :as u]
+            [uic.styles.mixins :as s]
             [clojure.string :as str]
             [uix.core]))
 
@@ -49,7 +49,7 @@
 ;; --------------------------------------------------------------
 
 ;; the following is built on top of https://github.com/Jarzka/stylefy
-;; and ezlix.styles.mixins
+;; and uic.styles.mixins
 ;; the intent is to provide a concise API to declare components with styles
 ;; It will support regular hiccup inline-styles along with css nested selectors, pseudo classes and modes
 ;; the whole in a unified and expressive API powered by a css-mixin library

@@ -1,13 +1,13 @@
-(ns ezlix.state
+(ns uic.state
   (:require [clojure.string :as str]
-            [ezlix.utils :as u]
+            [uic.utils :as u]
             [uix.core]
             #?@(:cljs [[refx.alpha :as rf]
                        [refx.interceptor :as interceptor]
                        [refx.interceptors :as interceptors]
                        [refx.db :as refx.db]
                        [cljs.pprint :as pp]]))
-  #?(:cljs (:require-macros [ezlix.state :refer [sub dbf event effect]])))
+  #?(:cljs (:require-macros [uic.state :refer [sub dbf event effect]])))
 
 ;; I will try to implement a nice way to declare re-frame subs/events/fxs
 
@@ -82,32 +82,32 @@
 #?(:cljs (do :registration
 
              (def default-tree
-               {:get (ezlix.state/sub [db [_ x & xs]]
+               {:get (uic.state/sub [db [_ x & xs]]
                                       (cond (not x) db
                                             xs (get-in db (cons x xs))
                                             (keyword? x) (get db x)
                                             (sequential? x) (get-in db x)))
 
-                :put (ezlix.state/dbf self [db [_ p v & pvs]]
+                :put (uic.state/dbf self [db [_ p v & pvs]]
                                       (let [db (cond (sequential? p) (if (seq p) (assoc-in db p v) v)
                                                      (keyword? p) (assoc db p v))]
                                         (if pvs
                                           (self db (into [nil] pvs))
                                           db)))
 
-                :upd (ezlix.state/dbf self [db [_ p f & pfs]]
+                :upd (uic.state/dbf self [db [_ p f & pfs]]
                                       (let [db (cond (sequential? p) (if (seq p) (update-in db p f) (f db))
                                                      (keyword? p) (update db p f))]
                                         (if pfs
                                           (self db (into [nil] pfs))
                                           db)))
 
-                :do (ezlix.state/event [_ [_ & xs]] {:dispatch-n xs})
+                :do (uic.state/event [_ [_ & xs]] {:dispatch-n xs})
 
-                :fx (ezlix.state/event [_ [_ fxs]] fxs)
+                :fx (uic.state/event [_ [_ fxs]] fxs)
 
-                :pp [(ezlix.state/event [_ [_ & xs]] {:pp xs})
-                     (ezlix.state/effect [_ xs] (doseq [x xs] (pp/pprint x)))]})
+                :pp [(uic.state/event [_ [_ & xs]] {:pp xs})
+                     (uic.state/effect [_ xs] (doseq [x xs] (pp/pprint x)))]})
 
              (defn register [frame tree]
                (doseq [p (all-paths tree)]
