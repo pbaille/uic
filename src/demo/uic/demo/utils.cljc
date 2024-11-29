@@ -31,7 +31,7 @@
 
 #?(:clj
    (defmacro card [& content]
-     (u/prob :card
+     (do u/prob :card
              `(c :.code-card
                  (code-block ~(str/join "\n" (mapv zp/zprint-str content)))
                  (code-output (list ~@content))))))
@@ -39,21 +39,21 @@
 #?(:clj
    (defmacro card* [& xs]
 
-     (u/prob :card*
+     (do u/prob :card*
              `(c :.code-card
                  (code-block ~(zp/zprint-str (cons 'c xs)))
                  (code-output (c ~@xs))))))
 
 #?(:clj
    (defmacro expr [x]
-     (u/prob :expr
+     (do u/prob :expr
              `(c :.code-card
                  (code-block ~(zp/zprint-str x))
                  (repl-output (pretty-str ~x))))))
 
 #?(:clj
    (defmacro code [& xs]
-     (u/prob :code
+     (do u/prob :code
              `(c :.code-card
                  (code-block ~@(interpose "\n" (map zp/zprint-str xs)))
                  (and ~@xs (repl-output ":ok"))))))

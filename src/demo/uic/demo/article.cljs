@@ -1,7 +1,7 @@
 (ns uic.demo.article
   (:require
    [uix.core :as uix]
-   [uic.component :refer [c]]
+   [uic.component :refer [c sc]]
    [uic.styles.mixins :as s]
    [uic.styles.colors :as c]
    [uic.demo.utils :refer-macros [card card* expr code]]))
@@ -69,9 +69,9 @@
               :text :lg
               :color :dark-slategray}}
 
-     (S1 :Uic
+     (S1 :uic
 
-         "Uic is a small library that lets you create and compose simple static hiccup components."
+         "uic is a small library that lets you create and compose simple components."
 
          "We can create a component like this:"
 
@@ -87,7 +87,7 @@
                  :on-click (fn [_] (js/alert "hello!"))}
                 "Click me")
 
-         "Nothing fancy so far, but wait a minute, how about this ?"
+         "Pretty normal so far, but how about this ?"
 
          (card* :button
                 {:style {:rounded 2 :p 1
@@ -96,18 +96,24 @@
                          :hover {:bg {:color :tomato}}}}
                 "Hover Me")
 
-         "Uic uses stylefy under the hood, and is letting you use pseudo classes and subselectors."
+         "uic uses the stylefy library under the hood, and is letting you use pseudo classes and subselectors."
 
          (card* {:style {:color :grey
-                         :.sub {:color :tomato}}}
+                         :.sub {:color :tomato
+                                :text :bold
+                                :hover {:bg {:color :gold}}}}}
                 "I can inject styles to my sub components!"
                 (mapv (fn [t] (c :div.sub t)) (range 3)))
 
-         "If you try the same with raw hiccup you will have a nasty warning from react."
+         "When dealing with component that only have a single :style prop, we can use the `sc` form (styled-component)"
+         (card (sc {:flex :center
+                    :text [:xl :bold :italic]}
+                   "Hello styled component"))
 
          (S2 :Styles
 
-             "You may have noticed that styles we are using in our components are not regular css ones, some are nested, some do not exists. Under the hood uic uses a collection of clojure functions to produce styles, along with stylefy that do the heavy lifting."
+             (str "You may have noticed that styles we are using in our components are not regular css ones, some are nested, some do not exists. "
+                  "Under the hood uic uses a collection of clojure functions to produce styles, along with stylefy that do the heavy lifting.")
 
              "Those functions are locatted in the `uic.styles.mixins` namespace, in this section we will introduce some of them."
 
@@ -141,46 +147,46 @@
              (S3 "Spaces"
                  "Paddings, margins and gaps"
                  (code (defn pad-square [pad]
-                         (c {:style {:p pad :size 100 :bg {:color :light-grey} :rounded 1}}
-                            (c {:style {:size :full :bg {:color :salmon} :rounded 1}})))
+                         (sc {:p pad :size 100 :bg {:color :light-grey} :rounded 1}
+                             (sc {:size :full :bg {:color :salmon} :rounded 1})))
                        (defn flex-row [& xs]
-                         (c {:style {:flex [:row {:gap 1}]}}
-                            xs)))
+                         (sc {:flex [:row {:gap 1}]}
+                             xs)))
                  (card (flex-row (pad-square 1)
                                  (pad-square 2)
                                  (pad-square 4)))
                  (code (defn square [margin pad]
-                         (c {:style {:p margin :size 100 :bg {:color :salmon} :rounded 1}}
-                            (c {:style {:size :full :p pad :bg {:color :light-grey} :rounded 1}}
-                               (c {:style {:size :full :bg {:color :light-skyblue} :rounded 1}})))))
+                         (sc {:p margin :size 100 :bg {:color :salmon} :rounded 1}
+                             (sc {:size :full :p pad :bg {:color :light-grey} :rounded 1}
+                                 (sc {:size :full :bg {:color :light-skyblue} :rounded 1})))))
                  (card (flex-row (square 1 2)
                                  (square 2 1)
                                  (square 4 0))))
 
              (S3 "Text"
-                 (card (c {:style (s/flex :column {:gap 1})}
-                          (mapv (fn [size]
-                                  (c {:key size :style [(s/text size) (s/flex :row :nogrow {:gap 2})]}
-                                     (c :span {:style [(s/width 100) (s/bg-color :light-grey) (s/text :center)]} (name size))
-                                     (c :span {:style (s/margin {:left 3})} (s/font-sizes size))))
-                                s/sorted-font-sizes)))
+                 (card (sc (s/flex :column {:gap 1})
+                           (mapv (fn [size]
+                                   (c {:key size :style [(s/text size) (s/flex :row :nogrow {:gap 2})]}
+                                      (sc :span [(s/width 100) (s/bg-color :light-grey) (s/text :center)] (name size))
+                                      (sc :span (s/margin {:left 3}) (s/font-sizes size))))
+                                 s/sorted-font-sizes)))
                  (expr (mapv s/text s/sorted-font-sizes)))
 
              (S3 :Colors
-                   (expr (s/color :tomato-light))
-                   (expr (s/color :light-skyblue))
-                   "CSS colors are available:"
-                   (card (c {:style {:flex [:center :wrap]}}
-                            (map (fn [name] (c {:style {:p 2 :display :inline-block
-                                                        :flex-basis "2.15%" :bg {:color name}}
-                                                :on-click (fn [] (js/alert name))}))
-                                 uic.styles.colors/color-presets)))
-                   "The awesome `thi.ng.color` library is let you manipulate colors in many ways."
-                   (card (c {:style {:flex [:row :nowrap]}}
-                            (c {:style {:p 2 :bg {:color :blue}}})
-                            (c {:style {:p 2 :bg {:color (c/mix :red :blue 0.5)}}})
-                            (c {:style {:p 2 :bg {:color :red}}})))
-                   (card (c {:style {:flex [:center :wrap]}}
-                            (map (fn [col] (c {:style {:p 2 :display :inline-block
-                                                       :flex-basis "10%" :bg {:color col}}}))
-                                 (uic.styles.colors/shades :gray 30)))))))))
+                 (expr (s/color :tomato-light))
+                 (expr (s/color :light-skyblue))
+                 "CSS colors are available:"
+                 (card (sc {:flex [:wrap]}
+                           (map (fn [name] (c {:style {:p 2 :display :inline-block
+                                                       :flex-basis "2.15%" :bg {:color name}}
+                                               :on-click (fn [] (js/alert name))}))
+                                uic.styles.colors/color-presets)))
+                 "The awesome `thi.ng.color` library is let you manipulate colors in many ways."
+                 (card (sc {:flex [:row :nowrap]}
+                           (sc {:p 2 :bg {:color :blue}})
+                           (sc {:p 2 :bg {:color (c/mix :red :blue 0.5)}})
+                           (sc {:p 2 :bg {:color :red}})))
+                 (card (sc {:flex [:center :wrap]}
+                           (map (fn [col] (sc {:p 2 :display :inline-block
+                                               :flex-basis "10%" :bg {:color col}}))
+                                (uic.styles.colors/shades :gray 30)))))))))

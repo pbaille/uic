@@ -3,7 +3,7 @@
             [uix.core :refer [$]])
   #?(:clj (:require [clojure.string :as str]
                     [uic.utils :as u])
-     :cljs (:require-macros [uic.component :refer [c]])))
+     :cljs (:require-macros [uic.component :refer [c sc]])))
 
 #?(:clj (do (defn parse-c [xs]
               (let [[tag xs] (if (keyword? (first xs))
@@ -13,7 +13,7 @@
                 {:tag tag :props props :children children}))
 
             (defmacro c
-              "easy component interface on top of helix"
+              "component"
               [& xs]
               (let [{:keys [tag props children]} (parse-c xs)]
                 (do u/prob :expand-c
@@ -21,4 +21,13 @@
                         ~(if-let [styles (:style props)]
                            (styles/compile-props2 styles (dissoc props :style))
                            props)
-                        ~@children))))))
+                        ~@children))))
+
+            (defmacro sc
+              "styled component"
+              [& xs]
+              (let [[tag styles & children]
+                    (if (keyword? (first xs)) xs (cons :div xs))]
+                `($ ~tag
+                    ~(styles/compile-props2 styles {})
+                    ~@children)))))

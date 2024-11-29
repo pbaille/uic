@@ -75,7 +75,7 @@
   "only support class and id selector for now."
   [x]
   (or (string? x)
-      (-> x name first #{"." "#"})))
+      (-> x name first #{\. "." \# "#"})))
 
 (defn expand-mixins
   [x]
@@ -224,5 +224,5 @@
                   (if (not styles)
                     props
                     (do u/prob :compile-props2
-                            `(stylefy/use-style ~(compiler_prepare-styles styles)
-                                                ~(compiler_unspread props))))))))
+                        `(stylefy/use-style ~(compiler_prepare-styles styles)
+                                            ~(compiler_unspread props))))))))
