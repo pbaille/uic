@@ -1,18 +1,20 @@
 ;; shadow-cljs configuration
-{:deps true
+{:deps {:aliases [:demo]}
 
  :nrepl {:port 8777}
 
- :builds {:css-hooks {:target :browser
-                      :modules {:main {:init-fn uic.demo.css-hooks/init
-                                       :reload-fn uic.demo.css-hooks/render}}
-                      :devtools {:http-root "public"
-                                 :http-port 8888
-                                 :preloads [uix.preload devtools.preload]}}
-          :app
+ :builds {:css-hooks
           {:target :browser
-           :modules {:main {:init-fn uic.demo.simple/init
-                            :reload-fn uic.demo.simple/render}}
+           :modules {:main {:init-fn uic.demo.css-hooks/init
+                            :reload-fn uic.demo.css-hooks/render}}
+           :devtools {:http-root "public"
+                      :http-port 8888
+                      :preloads [uix.preload devtools.preload]}}
+
+          :demo
+          {:target :browser
+           :modules {:main {:init-fn uic.demo.core/init
+                            :reload-fn uic.demo.core/render}}
            :devtools {:http-root "public"
                       :http-port 8888
                       :preloads [uix.preload devtools.preload]}}}}

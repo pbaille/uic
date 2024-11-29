@@ -147,35 +147,35 @@
                                            x))
                         (vector? x) (some compiler_dynamic? x))))
 
-            (comment (defn compiler_merge [x y]
-                       (cond
-                         (nil? x) y
-                         (nil? y) x
+            (defn compiler_merge [x y]
+              (cond
+                (nil? x) y
+                (nil? y) x
 
-                         (and (map? x) (map? y))
-                         (merge-with compiler_merge x y)
+                (and (map? x) (map? y))
+                (merge-with compiler_merge x y)
 
-                         (or (compiler_dynamic? x)
-                             (compiler_dynamic? y)) `(km+ ~x ~y)
+                (or (compiler_dynamic? x)
+                    (compiler_dynamic? y)) `(km+ ~x ~y)
 
-                         :else y))
+                :else y))
 
-                     (defn compiler_unspread [x]
-                       (cond (or (symbol? x) (seq? x)) x
-                             (vector? x) (reduce compiler_merge {} x)
-                             (map? x) (if-let [spread (:& x)]
-                                        (if (vector? spread)
-                                          (reduce compiler_merge (dissoc x :&) spread)
-                                          (compiler_merge x spread))
-                                        x)
-                             (nil? x) {}
-                             :else (u/error "bad argument " `compiler_unspread ":\n" x)))
+            (defn compiler_unspread [x]
+              (cond (or (symbol? x) (seq? x)) x
+                    (vector? x) (reduce compiler_merge {} x)
+                    (map? x) (if-let [spread (:& x)]
+                               (if (vector? spread)
+                                 (reduce compiler_merge (dissoc x :&) spread)
+                                 (compiler_merge x spread))
+                               x)
+                    (nil? x) {}
+                    :else (u/error "bad argument " `compiler_unspread ":\n" x)))
 
-                     (defn compiler_usable-styles [styles]
+            (comment (defn compiler_usable-styles [styles]
                        (if (compiler_dynamic? styles)
                          #_`(let [s# ~styles]
                               (uix.core/use-memo (fn [] (usable s#))
-                                [s#]))
+                                                 [s#]))
                          `(usable-memo ~styles)
                          (usable-memo styles)))
 
@@ -195,23 +195,24 @@
                             (if (compiler_dynamic? v)
                               (update ret :dynamic assoc k v)
                               (update ret :static assoc k v)))
-                          {:dynamic {} :static {} :spread (:& m)}
+                          {:dynamic {} :static {} :spread (let [spread (:& m)]
+                                                            (if (vector? spread) spread [spread]))}
                           (dissoc m :&)))
 
                 (defn compiler_prepare-styles [styles]
                   (cond (map? styles) (let [{:keys [static dynamic spread]} (compiler_split styles)
-                                            static-opts (->stylefy-opts static)]
+                                            static-opts (->stylefy-opts static)
+                                            dynamics (mapv (fn [x] `(->stylefy-opts ~x))
+                                                           (remove (fn [x] (contains? #{nil {}} x))
+                                                                   (cons dynamic spread)))]
                                         (cond (not (seq static))
-                                              (let [xs (cons dynamic spread)]
-                                                (case (count xs)
-                                                  0 {}
-                                                  1 `(->stylefy-opts ~(first xs))
-                                                  `(merge-stylefy-opts (mapv ->stylefy-opts [~dynamic ~@spread]))))
+                                              (case (count dynamics)
+                                                0 {}
+                                                1 `(->stylefy-opts ~(first dynamics))
+                                                `(merge-stylefy-opts ~dynamics))
 
-                                              (or (seq dynamic) (seq spread))
-                                              `(merge-stylefy-opts [~static-opts
-                                                                    ~@(map (fn [x] `(->stylefy-opts ~x))
-                                                                           (cons dynamic spread))])
+                                              (seq dynamics)
+                                              `(merge-stylefy-opts [~static-opts ~@dynamics])
 
                                               :else static-opts))
 
@@ -222,6 +223,6 @@
                 (defn compile-props2 [styles props]
                   (if (not styles)
                     props
-                    (u/prob :compile-props2
+                    (do u/prob :compile-props2
                             `(stylefy/use-style ~(compiler_prepare-styles styles)
                                                 ~(compiler_unspread props))))))))

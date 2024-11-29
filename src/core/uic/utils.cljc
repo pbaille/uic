@@ -14,6 +14,7 @@
 (defn prob
   "print all its arguments and return the last"
   [& xs]
+  (println "---")
   (apply pp xs) (last xs))
 
 #?(:cljs (defn log [& xs]
