@@ -171,58 +171,41 @@
                     (nil? x) {}
                     :else (u/error "bad argument " `compiler_unspread ":\n" x)))
 
-            (comment (defn compiler_usable-styles [styles]
-                       (if (compiler_dynamic? styles)
-                         #_`(let [s# ~styles]
-                              (uix.core/use-memo (fn [] (usable s#))
-                                                 [s#]))
-                         `(usable-memo ~styles)
-                         (usable-memo styles)))
+            (defn compiler_split [m]
+              (assert (map? m)
+                      (str "compiler_split expect a map, got:\n" m))
+              (reduce (fn [ret [k v]]
+                        (if (compiler_dynamic? v)
+                          (update ret :dynamic assoc k v)
+                          (update ret :static assoc k v)))
+                      {:dynamic {} :static {} :spread (let [spread (:& m)]
+                                                        (if (vector? spread) spread [spread]))}
+                      (dissoc m :&)))
 
-                     (defn compile-props [styles props]
-                       (do u/prob :expand-props
-                           (if (not styles)
-                             props
-                             `(stylefy/use-style ~(compiler_usable-styles (compiler_unspread styles))
-                                                 ~(compiler_unspread props))))))
+            (defn compiler_prepare-styles [styles]
+              (cond (map? styles) (let [{:keys [static dynamic spread]} (compiler_split styles)
+                                        static-opts (->stylefy-opts static)
+                                        dynamics (mapv (fn [x] `(->stylefy-opts ~x))
+                                                       (remove (fn [x] (contains? #{nil {}} x))
+                                                               (cons dynamic spread)))]
+                                    (cond (not (seq static))
+                                          (case (count dynamics)
+                                            0 {}
+                                            1 `(->stylefy-opts ~(first dynamics))
+                                            `(merge-stylefy-opts ~dynamics))
 
-            (do :new
+                                          (seq dynamics)
+                                          `(merge-stylefy-opts [~static-opts ~@dynamics])
 
-                (defn compiler_split [m]
-                  (assert (map? m)
-                          (str "compiler_split expect a map, got:\n" m))
-                  (reduce (fn [ret [k v]]
-                            (if (compiler_dynamic? v)
-                              (update ret :dynamic assoc k v)
-                              (update ret :static assoc k v)))
-                          {:dynamic {} :static {} :spread (let [spread (:& m)]
-                                                            (if (vector? spread) spread [spread]))}
-                          (dissoc m :&)))
+                                          :else static-opts))
 
-                (defn compiler_prepare-styles [styles]
-                  (cond (map? styles) (let [{:keys [static dynamic spread]} (compiler_split styles)
-                                            static-opts (->stylefy-opts static)
-                                            dynamics (mapv (fn [x] `(->stylefy-opts ~x))
-                                                           (remove (fn [x] (contains? #{nil {}} x))
-                                                                   (cons dynamic spread)))]
-                                        (cond (not (seq static))
-                                              (case (count dynamics)
-                                                0 {}
-                                                1 `(->stylefy-opts ~(first dynamics))
-                                                `(merge-stylefy-opts ~dynamics))
+                    (vector? styles) (compiler_prepare-styles {:& styles})
 
-                                              (seq dynamics)
-                                              `(merge-stylefy-opts [~static-opts ~@dynamics])
+                    :else `(->stylefy-opts ~styles)))
 
-                                              :else static-opts))
-
-                        (vector? styles) (compiler_prepare-styles {:& styles})
-
-                        :else `(->stylefy-opts ~styles)))
-
-                (defn compile-props2 [styles props]
-                  (if (not styles)
-                    props
-                    (do u/prob :compile-props2
-                        `(stylefy/use-style ~(compiler_prepare-styles styles)
-                                            ~(compiler_unspread props))))))))
+            (defn compile-props2 [styles props]
+              (if (not styles)
+                props
+                (do u/prob :compile-props2
+                    `(stylefy/use-style ~(compiler_prepare-styles styles)
+                                        ~(compiler_unspread props)))))))
