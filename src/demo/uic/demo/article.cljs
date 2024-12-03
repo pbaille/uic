@@ -24,23 +24,22 @@
   (let [[open set-open] (uix/use-state true)
         if-open (fn [a b] (if open a b))
         border {:width 3 :color :lightgrey0}]
-    (c :.section
-       {:style {:m {:top 2}
-                :border {:top border :left border}
-                :& styles}
-        :& attrs}
-       (c :.title
-          {:style {:flex [:inline :center {:items :baseline}]
-                   :hover {:.collapse-button {:display :inline}}}
-           :on-click #(set-open not)}
-          (name title)
-          (icon-button (if-open :minus-square :plus-square)
-                       {:color :lightgrey2}))
-       (c :.content
-          {:style {:flex [:nowrap :column {:gap 2}]
-                   :p {:left 2}
-                   :display (if-open :flex :none)}}
-          content))))
+    (sc :.section
+        {:m {:top 2}
+         :border {:top border :left border}
+         :& styles}
+        (c :.title
+           {:style {:flex [:inline :center {:items :baseline}]
+                    :hover {:.collapse-button {:display :inline}}}
+            :on-click #(set-open not)}
+           (name title)
+           (icon-button (if-open :minus-square :plus-square)
+                        {:color :lightgrey2}))
+        (sc :.content
+            {:flex [:nowrap :column {:gap 2}]
+             :p {:left 2}
+             :display (if-open :flex :none)}
+            content))))
 
 (letfn [(builder [size]
           (fn [title & content]

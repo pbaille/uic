@@ -27,24 +27,6 @@
 
     :else y))
 
-(defn km
-  "build a keyword map
-   special :& key is used as spread key, it can contain either a map or a seq of maps."
-  ([] {})
-  ([x]
-   (cond (nil? x) {}
-         (map? x)
-         (if-let [spread (:& x)]
-           (km+
-            (dissoc x :&)
-            (if (sequential? spread)
-              (reduce km+ {} (map km spread))
-              (km spread)))
-           x)
-         :else (u/error "bad argument to " `km ":\n" x)))
-  ([x & xs]
-   (reduce km+ (map km (cons x xs)))))
-
 ;; style
 ;; --------------------------------------------------------------
 
