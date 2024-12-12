@@ -6,7 +6,7 @@
      :cljs (:require-macros [uic.component :refer [c sc]])))
 
 #?(:clj (do (defn parse-c [xs]
-              (let [[tag xs] (if (keyword? (first xs))
+              (let [[tag xs] (if (ident? (first xs))
                                [(first xs) (rest xs)]
                                [:div xs])
                     [props children] (if (map? (first xs)) [(first xs) (rest xs)] [{} xs])]

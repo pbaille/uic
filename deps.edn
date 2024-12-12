@@ -6,7 +6,9 @@
         stylefy/stylefy {:mvn/version "3.2.0"}
         stylefy/generic-dom {:mvn/version "3.0.0"}
         thi.ng/color {:mvn/version "1.5.1"}
-        moi/refx {:local/root "/Users/pierrebaille/Code/Forks/refx"}
+        moi/refx {#_:local/root #_"/Users/pierrebaille/Code/Forks/refx"
+                  :git/url "https://github.com/pbaille/refx.git"
+                  :sha "2d9701362a362b7f2309b44d7895271408d97bf3"}
         com.pitch/uix.core {:mvn/version "1.2.0"}
         com.pitch/uix.dom {:mvn/version "1.2.0"}}
  :aliases {:demo {:extra-paths ["src/demo"]
