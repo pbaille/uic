@@ -13,7 +13,8 @@
   ([x]
    (if (sequential? x)
      (apply sc/css-color x)
-     (sc/css-color x))))
+     (or (sc/css-color x)
+         (when (string? x) x)))))
 
 (defn color
   ([x] {:color (css-color x)})
