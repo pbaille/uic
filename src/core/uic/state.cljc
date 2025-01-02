@@ -135,27 +135,25 @@
 ;; prelude
 #?(:cljs (do :init-and-hook
 
-             (def frames (atom {}))
-
              (defn init-frame
-               [{:keys [tree id init]}]
+               [{:keys [tree id init db]}]
                (let [frame (rf/new-frame)]
                  (register frame (merge default-tree tree))
+                 (rf/dispatch-sync frame [:fx {:db db}])
                  (when init (rf/dispatch-sync frame init))
-                 (println "subframe registered: " id)
                  [(rf/subscription-hook frame)
                   (partial rf/dispatch frame)]))
 
              (defn use-frame* [id tree db & [init]]
                (let [[subscribe dispatch]
                      (uix.core/use-memo
-                       (fn [] (let [frame (rf/new-frame)]
-                                (println "frame memo exec")
-                                (register frame (merge default-tree tree))
-                                (rf/dispatch-sync frame [:fx {:db db}])
-                                (when init (rf/dispatch-sync frame init))
-                                [(rf/subscription-hook frame)
-                                 (partial rf/dispatch frame)]))
-                       [id db tree init])]
+                      (fn [] (let [frame (rf/new-frame)]
+                               (println "frame memo exec")
+                               (register frame (merge default-tree tree))
+                               (rf/dispatch-sync frame [:fx {:db db}])
+                               (when init (rf/dispatch-sync frame init))
+                               [(rf/subscription-hook frame)
+                                (partial rf/dispatch frame)]))
+                      [id db tree init])]
                  (println "use-frame* ret " [subscribe dispatch])
                  [subscribe dispatch]))))

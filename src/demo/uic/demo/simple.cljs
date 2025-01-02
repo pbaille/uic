@@ -3,9 +3,8 @@
             [uix.dom]
             [stylefy.core :as stylefy]
             [stylefy.generic-dom :as gdom]
-            [uic.component :refer [c]]
-            [uic.state :as s :refer [signal sub dbf effect event]]
-            ))
+            [uic.component :refer [sc c]]
+            [uic.state :as s :refer [signal sub dbf effect event]]))
 
 (def tree
   {:init (dbf [_ _]
@@ -17,47 +16,75 @@
                  {:pp ["reset"]
                   :db {:name "nono" :x 12 :y 30}})})
 
+(let [[subscribe dispatch]
+      (s/init-frame {:id :pouetpouet
+                     :tree tree
+                     :db {:name "pouet"}
+                     :init [:init]})]
+  (def >> dispatch)
+  (def << subscribe))
+
 (defui app []
+
+  (sc {:flex [:column]}
+      (sc {:text :xl}
+          (<< [:name]))
+      (c :button
+         {:on-click (fn [_] (>> [:upd :x inc]))}
+         "inc x")
+      (c :button
+         {:on-click (fn [_] (>> [:reset]))}
+         "reset")
+      (c :input#my-input.chouette.pouet
+         {:style {:bg {:color "red"}
+                  :color "white"
+                  :hover {:bg {:color :green}}}
+
+          :default-value (<< [:get :name])
+          :on-change #(>> [:put :name (.. % -target -value)])})
+      (sc {:flex [:row {:gap 2}]}
+          (c (<< [:get :x]))
+          (c (<< [:get :y]))
+          (c (<< [:xy])))))
+
+(defui app-hooked []
 
   (let [[<< >>]
         (s/use-frame* :pouetpouet
                       tree
                       {:name "pouet"}
                       [:init])]
-    (c {:style {:flex [:column]}}
-       (c {:style {:text :xl}}
-          (<< [:name]))
-       (c :button
-          {:on-click (fn [_] (println "inc x") (>> [:put [:x] 34]))}
-          "inc x")
-       (c :button
-          {:on-click (fn [_] (>> [:reset]))}
-          "reset")
-       (c :input#my-input.chouette.pouet
-          {:style {:bg {:color "red"}
-                   :color "white"
-                   :hover {:bg {:color :green}}}
+    (sc {:flex [:column]}
+        (sc {:text :xl}
+            (<< [:name]))
+        (c :button
+           {:on-click (fn [_] (>> [:upd :x inc]))}
+           "inc x")
+        (c :button
+           {:on-click (fn [_] (>> [:reset]))}
+           "reset")
+        (c :input#my-input.chouette.pouet
+           {:style {:bg {:color "red"}
+                    :color "white"
+                    :hover {:bg {:color :green}}}
 
-           :default-value (<< [:get :name])
-           :on-change #(>> [:put :name (.. % -target -value)])})
-       (c {:style {:flex [:row {:gap 2}]}}
-          (c (<< [:get :x]))
-          (c (<< [:get :y]))
-          (c (<< [:xy])))
-       (c {:style {:color [:gray {:a 0.1}]}}
-          (vec (range 36)))
+            :default-value (<< [:get :name])
+            :on-change #(>> [:put :name (.. % -target -value)])})
+        (sc {:flex [:row {:gap 2}]}
+            (c (<< [:get :x]))
+            (c (<< [:get :y]))
+            (c (<< [:xy]))))))
 
-       (c {:style {:width (str 10 "px")}}
-          "io")
-       #_(c {:children (vec (range 36))}))))
+
 
 ;; start your app with your favorite React renderer
-(defonce root (uix.dom/create-root (js/document.getElementById "app")))
+(comment
+  (defonce root (uix.dom/create-root (js/document.getElementById "app")))
 
-(defn ^:dev/after-load render []
-  (uix.dom/render-root ($ app) root))
+  (defn ^:dev/after-load render []
+    (uix.dom/render-root ($ app) root))
 
 
-(defn ^:export init []
-  (stylefy/init {:dom (gdom/init)})
-  (render))
+  (defn ^:export init []
+    (stylefy/init {:dom (gdom/init)})
+    (render)))

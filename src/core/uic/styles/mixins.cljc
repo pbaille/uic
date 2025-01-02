@@ -163,8 +163,6 @@
   (update-keys m
                (fn [k] (keyword (str (name prefix) (name k))))))
 
-update-keys
-
 (defn border
   ([{:as opts
      :keys [dir]}]
@@ -187,9 +185,9 @@ update-keys
                              :x (border {:top opts :bottom opts})
                              :y (border {:right opts :left opts})
                              (border (assoc opts :dir dir))))))))))
-  ([width color]
+  ([width color & [style]]
    (border
-    {:color color :width width})))
+    {:color color :width width :style (or style :solid)})))
 
 (defn border-radius-value [x]
   (cond
