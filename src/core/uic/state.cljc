@@ -1,11 +1,7 @@
 (ns uic.state
   (:require [clojure.string :as str]
-            [uic.utils :as u]
             [uix.core]
             #?@(:cljs [[refx.alpha :as rf]
-                       [refx.interceptor :as interceptor]
-                       [refx.interceptors :as interceptors]
-                       [refx.db :as refx.db]
                        [cljs.pprint :as pp]]))
   #?(:cljs (:require-macros [uic.state :refer [sub dbf event effect]])))
 
@@ -137,7 +133,7 @@
 #?(:cljs (do :init-and-hook
 
              (defn init-frame
-               [{:keys [tree id init db]}]
+               [{:keys [tree init db]}]
                (let [frame (rf/new-frame)]
                  (register frame (merge default-tree tree))
                  (rf/dispatch-sync frame [:fx {:db db}])

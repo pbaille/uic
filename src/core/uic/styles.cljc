@@ -1,10 +1,9 @@
 (ns uic.styles
   (:refer-clojure :exclude [compile])
-  (:require [stylefy.core :as stylefy]
-            [uic.utils :as u]
+  (:require [uic.utils :as u]
             [uic.styles.mixins :as s]
-            [clojure.string :as str]
-            [uix.core]))
+            [uix.core]
+            [stylefy.core :as stylefy]))
 
 ;; impl
 ;; -----------------------------------------------------------
@@ -93,8 +92,7 @@
     :else (u/error "bad argument to " `mk ":\n" x)))
 
 (defn emit
-  [{:as parsed-style
-    :keys [sub self modes pseudo]}]
+  [{:keys [sub self modes pseudo]}]
   (into [self]
         (map (fn [[k v]] (into [k] (emit v)))
              (concat modes pseudo sub))))

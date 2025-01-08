@@ -1,9 +1,10 @@
 (ns uic.demo.core
-  (:require [uix.core :refer [defui $]]
+  (:require [uix.core :refer [$]]
             [uix.dom]
             [stylefy.generic-dom :as gdom]
             [stylefy.core :as stylefy]
             [uic.demo.article :as article]
+            #_[uic.demo.simple :as simple]
             ["highlight.js/lib/core" :as hljs]
             ["highlight.js/lib/languages/clojure" :as clojure]))
 
@@ -11,7 +12,7 @@
 
 (defn ^:dev/after-load render []
   (println "reload")
-  (uix.dom/render-root ($ article/component) root)
+  (uix.dom/render-root ($ article/component) #_($ simple/app) root)
   (hljs/highlightAll))
 
 (defn ^:export init []

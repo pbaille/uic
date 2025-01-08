@@ -20,7 +20,7 @@
         "pouet")))
 
 (defn section
-  [{:keys [styles attrs title content]}]
+  [{:keys [styles title content]}]
   (let [[open set-open] (uix/use-state true)
         if-open (fn [a b] (if open a b))
         border {:width 3 :color :lightgrey0}]

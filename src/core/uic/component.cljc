@@ -1,8 +1,7 @@
 (ns uic.component
   (:require [uic.styles :as styles]
             [uix.core :refer [$]])
-  #?(:clj (:require [clojure.string :as str]
-                    [uic.utils :as u])
+  #?(:clj (:require [uic.utils :as u])
      :cljs (:require-macros [uic.component :refer [c sc]])))
 
 #?(:clj (do (defn parse-c [xs]

@@ -1,6 +1,6 @@
 (ns uic.css
   (:require ["@css-hooks/react" :as css-hooks]
-            [uix.core :refer [defui $]]
+            [uix.core :refer [$]]
             [uix.dom]
             [uic.styles.mixins :as mixins]))
 

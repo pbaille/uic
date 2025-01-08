@@ -1,5 +1,5 @@
 (ns uic.core
-  (:require [uic.state :as s]
+  #_(:require [uic.state :as s]
             [uic.css :as css]
             [uic.component :as comp]
             [uic.styles :as styles]

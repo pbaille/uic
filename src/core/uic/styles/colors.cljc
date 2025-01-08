@@ -2,7 +2,6 @@
   (:require [thi.ng.math.core :as m]
             [thi.ng.color.core :as c]
             [thi.ng.color.presets :as cp]
-            [thi.ng.color.gradients :as cg]
             [uic.utils :as u]))
 
 (def user-presets* (atom {}))
@@ -51,7 +50,7 @@
 
 (defn hex->rgba [hex-kw]
   (let [s (name hex-kw)]
-    (if (= \# (first s))
+    (when (= \# (first s))
       (c/as-rgba (c/hex->int s)))))
 
 (def modifiers
@@ -120,7 +119,7 @@
 (defn mix [col1 col2 ratio]
   (let [c1 (color col1)
         c2 (color col2)]
-    (if (and c1 c2)
+    (when (and c1 c2)
       (color (m/mix c1 c2 ratio)))))
 
 (def color-presets (keys cp/colors))
@@ -128,10 +127,10 @@
 
 (comment
 
-  (color2 "green" 0.4)
+  (color "green" 0.4)
 
   (color :green)
-  (color2 :grey3)
+  (color :grey3)
   (cp/preset-rgb :grey3)
   (deref (c/as-css (c/as-rgba (get greys :grey3))))
   (get-user-preset :lightgrey)
@@ -149,7 +148,5 @@
          0.5)
 
   (mix :red :blue 0.5)
-  (-> (hsla :red) c/as-int24 c/as-css deref)
-
   (color :lightgrey)
   (color :lightgrey))

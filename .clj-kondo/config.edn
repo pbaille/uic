@@ -1,9 +1,1 @@
-{:lint-as {uic.state/sub clojure.core/fn
-           uic.state/dbf clojure.core/fn
-           uic.state/event clojure.core/fn
-           uic.state/effect clojure.core/fn
-           ;; uic.state/signal clojure.core/fn
-           }
- :linters {:unused-value {:level :off}}
- :hooks {:macroexpand {uic.state/signal hooks.uic.state/signal}}
- :config-in-call {uic.state/signal {:ignore [:type-mismatch]}}}
+{:config-paths ["../resources/clj-kondo.exports/pbaille/uic/"]}

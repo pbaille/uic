@@ -93,7 +93,7 @@
      `(str "calc" ~@(calc-expr (type->fn type) expr))))
 
 #?(:clj (comment
-          (calc :space (- :full (/ :xxs 10) (- (* :xl 2) "1px")))))
+          (macroexpand '(calc :space (- :full (/ :xxs 10) (- (* :xl 2) "1px"))))))
 
 #?(:clj
    (defmacro define-space-mixin

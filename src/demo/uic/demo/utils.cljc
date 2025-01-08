@@ -52,7 +52,8 @@
                  (repl-output (pretty-str ~x))))))
 
 #?(:clj
-   (defmacro code [& xs]
+   (defmacro code
+     [& xs]
      (do u/prob :code
              `(c :.code-card
                  (code-block ~@(interpose "\n" (map zp/zprint-str xs)))
