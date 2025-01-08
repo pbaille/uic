@@ -1,0 +1,6 @@
+{:lint-as {uic.state/sub clojure.core/fn
+           uic.state/dbf clojure.core/fn
+           uic.state/event clojure.core/fn
+           uic.state/effect clojure.core/fn
+           uic.state/signal clojure.core/comment}
+ :linters {:unused-value {:level :off}}}
