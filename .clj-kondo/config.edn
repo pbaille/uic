@@ -1,1 +1,1 @@
-{:config-paths ["../resources/clj-kondo.exports/pbaille/uic/"]}
+{:config-paths ["../resources/clj-kondo.exports/pbaille/uic"]}
