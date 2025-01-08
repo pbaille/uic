@@ -65,7 +65,8 @@
           (defmacro sub [& xs]
             `(rfn :rf-sub ~@xs))
 
-          (defmacro signal [[deps event-pattern] & body]
+          (defmacro signal
+            [[deps event-pattern] & body]
             `(map->RFHandler {:type :rf-sub
                               :handler (fn [~(vec (keys deps)) ~event-pattern] ~@body)
                               :inputs ~(vec (vals deps))}))

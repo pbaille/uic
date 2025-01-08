@@ -2,5 +2,8 @@
            uic.state/dbf clojure.core/fn
            uic.state/event clojure.core/fn
            uic.state/effect clojure.core/fn
-           uic.state/signal clojure.core/comment}
- :linters {:unused-value {:level :off}}}
+           ;; uic.state/signal clojure.core/fn
+           }
+ :linters {:unused-value {:level :off}}
+ :hooks {:macroexpand {uic.state/signal hooks.uic.state/signal}}
+ :config-in-call {uic.state/signal {:ignore [:type-mismatch]}}}

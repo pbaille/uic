@@ -4,7 +4,7 @@
             [stylefy.core :as stylefy]
             [stylefy.generic-dom :as gdom]
             [uic.component :refer [sc c]]
-            [uic.state :as s :refer [signal sub dbf effect event]]))
+            [uic.state :as s :refer [signal sub dbf event]]))
 
 (def tree
   {:init (dbf [_ _]
